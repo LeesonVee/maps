@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>创业慧康</title>
+<!-- <link rel="shortcut icon" href="img/favicon.png" type="image/x-icon" /> -->
+<link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="css/gridster/jquery.gridster.css">
+<link rel="stylesheet" href="css/element.css"/>
+<link rel="stylesheet" type="text/css" href="css/range/ion.rangeSlider.css" />
+<link rel="stylesheet" type="text/css" href="css/range/ion.rangeSlider.skinNice.css"/>
+<link rel="stylesheet" type="text/css" href="./font_third/fontcloudhis/fontstyle.css"/>
+<link rel="stylesheet" type="text/css" href="css/gridstacklayout.css"/>
+<link rel="stylesheet" href="./font_third/font-ali/iconfont.css">
+<link rel="stylesheet" href="./font_third/font-awesome/css/site.css">
+<link rel="stylesheet" href="./font_third/font-awesome/font-awesome/css/font-awesome.css">
+<link rel="stylesheet" type="text/css" href="css/normalize.min.css"/>
+</head>
+<body style="overflow: hidden;">
+<div id="app">
+	<div id="backEditDiv" style="margin-bottom: 5px;height: 50px;display: none; background-color:#363d3f;border-color:#363d3f;border-radius: 4px ">
+		<div v-bind:class="[btnFloatLeft,btnDefined,btnItem.btnDefaultStatus?btnDefaultColor:btnMouseoverColor]" v-bind:id="btnItem.id"  @click="clickBtn(btnItem.id)" @mouseenter="changeClass(true,btnItem)"  @mouseleave="changeClass(false,btnItem)"
+			 style="margin-top: 8px; margin-bottom: 8px; height: 35px;margin-right: 15px ">
+			<div class="btn-float-right btn-defined-content">{{btnItem.btnName}}</div>
+			<div class="btn-float-right btn-defined-icon"><i v-bind:class="btnItem.iconName"></i></div>
+		</div>
+	</div>
+	<!-- 菜单 -->
+	<nav id="menuNav" class="navbar navbar-default navbar-defined" role="navigation" style="height: 50px">
+		<div class="container-fluid">
+			<!-- 大屏标题 -->
+			 <div class="m-title">
+			      <label class="title-label">
+			        <input type="text" placeholder="请输入大屏标题" maxlength="50" v-model="layoutName">
+			      </label>
+		    </div>
+			<!-- 菜单 -->
+			<div id="viewMenu" class="menu-align">
+				<ul class="nav navbar-nav" >
+					<li class="dropdown" v-for="(item,index) in topMenu" v-if="item.MENU_GROUP_LEVEL!='1'">
+						<a href="#" class="dropdown-toggle ui-menu-font" data-toggle="dropdown">{{item.MENU_NAME}}<i v-bind:class="item.MENU_ICON"></i></a>
+						<ul class="dropdown-menu">
+							<li class="dropdown-submenu" v-for="(secondItem,index2) in secondMenu" v-if="item.MENU_ID==secondItem.PARENT_MENU_ID">
+								<a href="#">{{secondItem.MENU_NAME}}</a>
+								<ul class="dropdown-menu pull-right ui-submenu-width">
+									<li class="li-center li-border-none" v-for="(subItem,index3) in subMenu" v-if="secondItem.MENU_ID == subItem.PARENT_MENU_ID">
+										<div class="div-submenu">
+											<div class="img-border-white" @mouseenter="imgMouseenter($event)"  @mouseLeave="imgMouseLeave($event)" >
+												<img class="menuimg-hover" v-bind:chart-name="subItem.MENU_NAME" v-bind:chart-type="subItem.MENU_TYPE" v-bind:src="subItem.MENU_ICON" class="img-rounded" @click="imgClick(subItem,$event)" />
+											</div>
+											<div>{{subItem.MENU_NAME}}</div>
+										</div>
+									</li>
+								</ul>
+							</li>
+							<li v-else class="li-center li-border-none" style="width:380px;" v-for="(subItem,index3) in subMenu" v-if="item.MENU_ID == subItem.PARENT_MENU_ID">
+								<div class="div-submenu">
+									<div class="img-border-white"  @mouseenter="imgMouseenter($event)"  @mouseLeave="imgMouseLeave($event)" >
+										<img class="menuimg-hover" v-bind:chart-name="subItem.MENU_NAME" v-bind:chart-type="subItem.MENU_TYPE" v-bind:src="subItem.MENU_ICON" class="img-rounded" @click="imgClick(subItem,$event)"/>
+									</div>
+									<div>{{subItem.MENU_NAME}}</div>
+								</div>
+							</li>
+						</ul>
+					</li>
+					<li v-if="item.MENU_GROUP_LEVEL=='1'" class="dropdown" v-for="(item,index) in subMenu" >
+					    <a href="#" class="dropdown-toggle ui-menu-font" data-toggle="dropdown" @click="imgClick(item,$event)">{{item.MENU_NAME}}<i v-bind:class="item.MENU_ICON"></i></a>
+					</li>
+				</ul>
+			</div>
+			<div id="btnDiv" style="margin-top: 8px;margin-bottom: 8px;height: 35px;float:right;" v-for="(item,index) in btnList">
+				<div v-bind:class="[btnFloatRight,btnDefined,item.btnDefaultStatus?btnDefaultColor:btnMouseoverColor]" v-bind:id="item.id"  @click="clickBtn(item.id,index)" @mouseenter="changeClass(true,item)"  @mouseleave="changeClass(false,item)">
+					<div class="btn-float-right btn-defined-content">{{item.btnName}}</div>
+					<div class="btn-float-right btn-defined-icon"><i v-bind:class="item.iconName"></i></div>
+				</div>
+			</div>
+		</div>
+	</nav>
+	<div id="contextPanel" style="padding-left: 25px">
+		<div id="gridCanvas" style="display: inline-block;overflow: auto; height: inherit;"  @click="canvasClick">
+			<div v-bind:class="['gridster',gridsterClass]" id="gridContainer">
+				<ul></ul>
+			</div>
+		</div>
+		<div id="setPanel" style="display: inline-block;width: 400px;height: inherit;float: right;">
+			<h4>{{chartName}}</h4>
+			<ul id="viewSetTab" class="nav nav-tabs">
+				<li class="dropdown">
+					<a href="#" id="dataTabDrop" class="dropdown-toggle" data-toggle="dropdown">数据 <b class="caret"></b></a>
+					<ul class="dropdown-menu" role="menu" aria-labelledby="dataTabDrop">
+						<li><a href="#datamodelList" data-toggle="tab">数据明细</a></li>
+					</ul>
+				</li>
+				<li><a href="#styleSet" data-toggle="tab">样式</a></li>
+				<li><a href="#warnSet" data-toggle="tab">预警</a></li>
+			</ul>
+			<div id="dataTabContent" class="tab-content" style="height: 100%;overflow-y:auto;overflow-x:hidden">
+				<div class="tab-pane fade" id="datamodelList" style="height:100%;"></div>
+				<div class="tab-pane fade" id="styleSet"></div>
+				<div class="tab-pane fade" id="warnSet" ></div>
+			</div>
+		</div>
+	</div>
+	<div id="rangeContainer" align="right" style="padding-top: 10px">
+		<div style="width: 200px;">
+			<div id="costRange"></div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="js/jquery/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="js/bootstrap/bootstrap.js"></script>
+<script type="text/javascript" src="js/jquery/jquery.gridster.js"></script>
+<script type="text/javascript" src="js/config.js"></script>
+<script type="text/javascript" src="js/range/ion.rangeSlider.js"></script> 
+<script type="text/javascript" src="js/echarts/echarts.js"></script>
+<script type="text/javascript" src="js/echarts/echarts-action-carousel.js"></script>
+<script type="text/javascript" src="js/chartsutil.js"></script>
+<script type="text/javascript" src="js/commonutil.js"></script>
+<script type="text/javascript" src="js/numberAnimate/numberAnimate.js"></script>
+<script type="text/javascript" src="js/sortable/Sortable.js"></script>
+<script type="text/javascript" src="js/jsonrequest/ajaxrequestasync.js"></script>
+<script type="text/javascript" src="js/jsonrequest/ajaxrequestsync.js"></script>
+<script type="text/javascript" src="js/vue/vue.min.js"></script>
+<script type="text/javascript" src="js/element.js"></script>
+<script type="text/javascript" src="js/assemblechartData.js"></script>
+<script type="text/javascript">
+var selectChartWidget={};//选中的组件
+var charts={};
+var gridster;
+//布局的最大行数和列数
+var countcols;
+var countrows;
+//屏幕分辨率
+var screenWidth=window.screen.width;
+var screenHeight=window.screen.height;
+//浏览器标题和地址栏
+var browserTitleH=70;
+//任务栏高度
+var taskBarH=45;
+//收藏夹的高度
+var favoriteH=10;
+//浏览器竖向滚动条的宽
+var overYH=15;
+//预警界面右边边框
+var warnPaddingright=15;
+//根据屏幕分辨率设置拖动组件宽高的基本单位,暂定计算方式为分辨率的宽/100,取整
+var widgetBaseSize=parseInt(screenWidth/100);
+var widget_base_dimensions=[widgetBaseSize,widgetBaseSize];
+//画布容器的初始宽高
+var canvasWidth;
+var canvasHeight;
+var vm = new Vue({
+    el:'#app',
+    data:{
+    	layoutId:'',
+    	layoutCode:'layout_'+(new Date().getTime()),
+    	layoutName:'未命名大屏',
+    	widgetIndex:0,//组件的个数索引
+    	cockpitBgIndex:1,//背景图片索引
+    	gridsterClass:'grid_container0',
+    	widgetContainerStyle:'height:calc(100% - 25px);width:100%;overflow: hidden;',
+    	toolContainerStyle:'height:100%;width:100%;overflow: hidden;',
+    	chartName:'',
+        topMenu:[],
+        secondMenu:[],
+        subMenu:[],
+        btnFloatLeft:'btn-float-right',
+        btnFloatRight:'btn-float-right',
+        btnDefined:'btn-defined',
+        btnMouseoverColor:'btn-mouseover-color',
+        btnDefaultColor:'btn-default-color',
+		defaultLiId:'',
+		liFocus:false,
+		resetViewFlag:false,//是否点击了样式恢复默认设置的按钮
+        btnItem:{
+            id:'backEditBtn',
+            btnName:'返回编辑',
+            iconName:'glyphicon glyphicon-repeat',
+            btnDefaultStatus:true
+        },
+        btnList:[{
+            id:'saveBtn',
+            btnName:'保存',
+            iconName:'glyphicon glyphicon-floppy-disk',
+            btnDefaultStatus:true
+        },{
+            id:'toggleBgBtn',
+            btnName:'切换背景',
+            iconName:'glyphicon glyphicon-random',
+            btnDefaultStatus:true
+        },{
+            id:'zoomBtn',
+            btnName:'隐藏设置栏',
+            iconName:'glyphicon glyphicon-transfer',
+            btnDefaultStatus:true
+        },{
+            id:'previewBtn',
+            btnName:'预览',
+            iconName:'glyphicon glyphicon-eye-open',
+            btnDefaultStatus:true
+        },{
+            id:'delAllBtn',
+            btnName:'清空',
+            iconName:'glyphicon glyphicon-trash',
+            btnDefaultStatus:true
+        }]
+    },
+    mounted:function(){
+        this.initPanelSize();
+        this.initEl();
+        this.loadMenuData('POST',configpre.api_getMenuInfo);//拉取菜单信息
+    },
+    methods:{
+    	canvasClick:function(){
+    		if(!this.liFocus && this.defaultLiId!=''){
+    			this.setBorderRadius(this.defaultLiId,false);
+    		}
+    		//当没有选中组件时把已选中的组件置空,相关页面设置为默认页面
+    		if(!this.liFocus){
+    			selectChartWidget={};
+    			this.chartName='';
+    			this.setDefaultPage('1');
+    		}
+    		this.liFocus = false;
+    	},
+        initEl:function(){
+            $("#costRange").ionRangeSlider({
+                type: "single",
+                min: 10,
+                max: 400,
+                step:10,
+                from:100,
+                hideMinMax:true,
+                onFinish:this.rangeFinish
+            });
+            gridster = $('.gridster > ul').gridster({
+                widget_margins: [0, 0],//组件之间的间距
+                widget_base_dimensions: widget_base_dimensions,
+                autoscroll:false,
+                max_cols: countcols,
+                max_rows: countrows,
+                avoid_overlapped_widgets:false,//允许组件覆盖
+                shift_widgets_up:false,//允许组件上方有空白
+                limit: {
+                    width: true,
+                    height: true,
+                },
+                draggable: {
+                    /* handle: 'div', */    //模块内定义拖动的元素
+                },
+                resize: {//改变每个组件的大小，设置能变化的最大宽高和最小宽高
+                    enabled: true,
+                    max_size: [countcols, countrows],
+                    min_size: [1, 1],
+                    stop:this.onResizeStop,
+                }
+            }).data('gridster');
+		},
+        //初始化一些元素的宽高
+        initPanelSize:function(){
+            //计算设置区域的高（分辨率-任务栏-浏览器标题和地址栏-按钮高度-菜单高度）
+            var setPanelHeight=screenHeight-taskBarH-browserTitleH-$('#btnDiv').outerHeight(true)-$('#menuNav').outerHeight(true);
+            //进度条的高度
+            var rangeH=$('#rangeContainer').outerHeight(true);
+            //切换设置面板是否显示的按钮的宽度
+            var toggleSizeDivWidth= $('#toggleSizeDiv').outerWidth(true);
+            var setPanelWidth=$('#setPanel').outerWidth(true);
+            //计算画布的宽（分辨率-设置区域的宽-body的padding-left）
+            var bodyPadding=Number($('body').css('padding-left').replace('px',''));
+            canvasWidth=screenWidth-bodyPadding-setPanelWidth-toggleSizeDivWidth-overYH-warnPaddingright-15;
+            canvasHeight=setPanelHeight-favoriteH-rangeH;
+            //相关容器的宽高设置
+            $('#contextPanel').height(canvasHeight);
+            $('#gridCanvas').width(canvasWidth);
+            $('#rangeContainer').width(canvasWidth);
+            $('#toggleSizeBtn').css('margin-top',parseInt(($('#contextPanel').height())/2));
+            //根据分辨率初始化布局的最大行数和列数，行数和列数一旦固定就不会随着画布的大小而改变，改变的是组件宽高的基本单位
+            countcols=parseInt(screenWidth/widget_base_dimensions[0]);
+            countrows=parseInt(screenHeight/widget_base_dimensions[1]);
+            //初始化画布的宽高
+            $('#gridContainer').width(countcols*widget_base_dimensions[0]);
+            $('#gridContainer').height(countrows*widget_base_dimensions[1]);
+            //设置画布的背景方格
+            /* var bgBaseSizeW=parseInt(widget_base_dimensions[0]-1);//格子的边框为1
+            var bgBaseSizeH=parseInt(widget_base_dimensions[1]-1);
+            var bgBaseSize=parseInt(widget_base_dimensions[0])+'px '+parseInt(widget_base_dimensions[1])+'px';
+            $('#gridContainer').css('background','-webkit-linear-gradient(top, transparent '+bgBaseSizeH+'px, #19b4ee '+bgBaseSizeH+'px), -webkit-linear-gradient(left, transparent '+bgBaseSizeW+'px, #19b4ee '+bgBaseSizeW+'px)')
+                                 .css('background-size',bgBaseSize);  */
+		},
+        //拖动条拖动结束之后调用的方法
+        rangeFinish:function(rangeSlider){
+            var rangeValue=rangeSlider.fromNumber/100;
+            var gridEl=$('#gridContainer');
+            var max_cols=gridster.options.max_cols;
+            var max_rows=gridster.options.max_rows;
+            var preWidgetDim=widget_base_dimensions;
+            //根据拖动条拖动的数据（百分比）进行修改组件大小的基本单位：原大小*拖动的百分比
+            var widgetDimW=parseInt(preWidgetDim[0]*rangeValue);
+            var widgetDimH=parseInt(preWidgetDim[1]*rangeValue);
+            var newWidgetDim=[widgetDimW,widgetDimH];
+            gridster.options.widget_base_dimensions=newWidgetDim;
+            //根据改变后的组件大小的基本单位进行计算画布的宽高，同时修改画布的背景格子的大小
+            var gridNewW=parseInt(max_cols*widgetDimW);
+            var gridNewH=parseInt(max_rows*widgetDimH);
+            gridEl.width(gridNewW);
+            gridEl.height(gridNewH);
+            var bgBaseSizeW=parseInt(widgetDimW-1);//格子的边框为1
+            var bgBaseSizeH=parseInt(widgetDimH-1);
+            var bgBaseSize=parseInt(widgetDimW)+'px '+parseInt(widgetDimH)+'px';
+            /* gridEl.css('background','-webkit-linear-gradient(top, transparent '+bgBaseSizeH+'px, #19b4ee '+bgBaseSizeH+'px), -webkit-linear-gradient(left, transparent '+bgBaseSizeW+'px, #19b4ee '+bgBaseSizeW+'px)')
+                  .css('background-size',bgBaseSize); */
+            //因为组件大小的基本单位已经改变，需要重新初始化gridster的一些初始化参数
+            //设置gridster的最小宽高为改变后的组件大小的基本单位
+            gridster.min_widget_width=widgetDimW;
+            gridster.min_widget_height=widgetDimH;
+            gridster.generate_grid_and_stylesheet();//重新计算行数和列数
+            gridster.get_widgets_from_DOM();//重新注册所有的组件，如果调用这个方法所有的组件的位置将会复原
+            gridster.set_dom_grid_height();
+            gridster.set_dom_grid_width();
+            gridster.draggable();//拖动设置
+            gridster.set_new_num_rows(max_rows);//重新设置行数
+		},
+        //画布容器的扩大和收缩
+        toggleGridContainerSize:function(index){
+            var setPanelW=$('#setPanel').width();
+            var gridCanvasW=$('#gridCanvas').width();
+            var divDisplay=$('#setPanel').css('display');
+            //当要显示设置面板时还原画布容器的宽度，当要隐藏设置面板时画布容器的宽加上设置面板的宽
+            if(divDisplay=='none'){
+            	this.btnList[index].btnName = '隐藏设置栏';
+                $('#gridCanvas').width(canvasWidth);
+            }
+            if(divDisplay=='block'){
+            	this.btnList[index].btnName = '显示设置栏';
+                $('#gridCanvas').width(canvasWidth+setPanelW);
+            }
+            $('#setPanel').toggle();
+		},
+        //编辑状态和预览状态的切换
+        togglepreviewEdit:function(flag){
+            var setPanelW=$('#setPanel').width();
+            var gridCanvasW=$('#gridCanvas').width();
+            var gridCanvasH=$('#gridCanvas').height();
+            var toggleSizeDivW= $('#toggleSizeDiv').outerWidth(true);
+            var menuH=$('#menuNav').outerHeight(true);
+            var rangeH=$('#rangeContainer').outerHeight(true);
+            if(flag=='preview'){
+                //隐藏编辑相关的按钮、菜单和面板
+                $('#btnDiv').hide();
+                $('#menuNav').hide();
+                $('#setPanel').hide();
+                $('#toggleSizeDiv').hide();
+                $('#rangeContainer').hide();
+                $('.closeBtn').hide(); // 去掉关闭按钮
+                gridster.disable(); // 设置不可拖动
+                gridster.disable_resize(); // 设置不可改变组件大小
+                //显示返回编辑按钮
+                $('#backEditDiv').show();
+                //设置画布容器的宽度增加设置面板的宽度和切换按钮的宽度
+                $('#gridCanvas').width(canvasWidth+setPanelW+toggleSizeDivW);
+                $('#gridCanvas').height(canvasHeight+menuH+rangeH);
+
+
+            }
+            if(flag=='edit'){
+                //显示编辑相关的按钮、菜单和面板
+                $('#btnDiv').show();
+                $('#menuNav').show();
+                $('#setPanel').show();
+                $('#toggleSizeDiv').show();
+                $('#rangeContainer').show();
+                $('.closeBtn').show();// 添加关闭按钮
+                gridster.enable();// 设置可拖动
+                gridster.enable_resize();// 设置可以改变组件大小
+                //隐藏返回编辑按钮
+                $('#backEditDiv').hide();
+                //还原画布容器的宽度和高度
+                $('#gridCanvas').width(canvasWidth);
+                $('#gridCanvas').height(canvasHeight);
+            }
+		},
+        //鼠标移动、离开菜单图片添加样式
+        imgMouseenter:function(event){
+            var obj = event.currentTarget;
+            if(obj){
+                var jParent=$(obj);
+                jParent.removeClass('img-border-white');
+                jParent.addClass('img-border-blue');
+            }
+        },
+        imgMouseLeave:function(event){
+            var obj = event.currentTarget;
+            if(obj){
+                var jParent=$(obj);
+                jParent.addClass('img-border-white');
+                jParent.removeClass('img-border-blue');
+            }
+        },
+        changeClass:function(flag,item){
+            if(flag){
+                item.btnDefaultStatus = false;
+            }else{
+                item.btnDefaultStatus = true;
+            }
+        },
+        setData:function(){
+            //先不考虑组件类型
+            var datamodelList='datawidget/datamodelList.html';
+            $('#datamodelList').html('');
+            $('#datamodelList').load(datamodelList)
+		},
+		//选中组件，设置边框颜色
+		setBorderStyle:function(liId,chartTypes){
+            if(this.defaultLiId!=''){
+                this.setBorderRadius(this.defaultLiId,false);
+			}
+            this.setBorderRadius(liId,true);
+            this.defaultLiId=liId;
+		},
+		setBorderRadius:function(liId,show){
+			var li = $("#"+liId);
+			if(show){
+				li.hasClass('widget-border-style1-border')?'':li.addClass('widget-border-style1-border');
+			}else{
+				li.hasClass('widget-border-style1-border')?li.removeClass('widget-border-style1-border'):'';
+			}
+		},
+        //视图属性设置界面的加载以及属性设置的处理
+        setViewForm:function(){
+        	 var chartType=selectChartWidget.attr('chart-type');
+             var chartName=selectChartWidget.attr('chart-name');
+             var viewsetHtml = 'viewset/';
+             if (chartType == 'line' || chartType == 'lineArea') {
+                 viewsetHtml = viewsetHtml + 'line.html';
+             } else {
+                 viewsetHtml = viewsetHtml + chartType + '.html';
+             }
+             this.chartName=chartName||'';
+             //嵌套视图属性设置页面
+             $('#styleSet').html('');
+             $('#styleSet').load(viewsetHtml,this.afterLoadViewSet);
+        },
+        //视图属性设置界面的加载以及属性设置的处理
+        setDefaultPage:function(type){
+            var defaultPage='viewset/defaultPage.html';
+            if(type == '1'){
+                $('#datamodelList').html('');
+                $('#datamodelList').load(defaultPage)
+                $('#styleSet').html('');
+                $('#styleSet').load(defaultPage);
+			}else{
+			   var chartType=selectChartWidget.attr('chart-type');
+		       var chartName=selectChartWidget.attr('chart-name');
+               if(chartType == 'cockpitTitle'||chartType == 'datetime'||chartType == 'textbox' || chartType.indexOf('border') != -1){
+                    $('#datamodelList').html('');
+                    $('#datamodelList').load(defaultPage)
+
+                }
+                $('#warnSet').html('');
+                $('#warnSet').load(defaultPage)
+			}
+
+        },
+        afterLoadViewSet:function(response,status,xhr){
+			 if(status=='success'){
+                 if ($('.form-horizontal').length > 0) {
+                     var chartType=selectChartWidget.attr('chart-type');
+                     var chartIndex=selectChartWidget.attr('chart-index');
+                     var containerId=selectChartWidget.attr('id');
+                    /*  var widgetViewSet=charts[containerId].config.viewSet; */
+                     var table=chartType=='icon'?'#indicIconTable tbody tr':null;                     
+                     if(!(this.resetViewFlag)){
+                    	 var widgetViewSet=charts[containerId].config.viewSet;
+                    	 //如果widgetViewSet不存在说明是第一次设置该视图，则将form表单中的数据保存到charts对应的属性当中去
+                         if($.isEmptyObject(widgetViewSet)){
+                         	// 初始化form表单时默认标题值
+                             var defaultName = "未定义图表" + chartIndex;
+                             if(chartType=='cockpitTitle'){
+                                 defaultName = "某某卫生综合管理驾驶舱";
+     						}
+                             $("#defaultName").attr("value",defaultName);
+                             var viewSetformJson=this.getFormData('.form-horizontal',table,'indicIcon',null,chartType);
+                             charts[containerId].config.viewSet=viewSetformJson;
+                             //第一次设置该视图将form表单中的默认设置记录下来
+                             charts[containerId].config.defaultSet=viewSetformJson;
+                         }else{//如果viewsetInfo中存在该表单数据的话则说明不是第一次设置该视图，则取之显示到form表单中
+                        	 this.initForm(widgetViewSet,'.form-horizontal');
+                            /*  if(table){
+                                 if(widgetViewSet){
+                                 	 var tableData=widgetViewSet['indicIcon'];
+                                      if(tableData){
+                                          this.initTableData(tableData,table);
+                                      }
+                                 }
+                             } */
+                         }
+                     }else{
+                    	 charts[containerId].config.viewSet=charts[containerId].config.defaultSet;
+                    	 var widgetViewSet=charts[containerId].config.viewSet;
+                    	 this.initForm(widgetViewSet,'.form-horizontal');
+                        /*  if(table){
+                             if(widgetViewSet){
+                             	 var tableData=widgetViewSet['indicIcon'];
+                                  if(tableData){
+                                      this.initTableData(tableData,table);
+                                  }
+                             }
+                         } */
+                         this.resetViewFlag=false;
+                         this.changeViewSet();
+                     }
+                     //点击确定按钮清空viewsetInfo中对应的之前的表单数据，将form的值重新保存到viewsetInfo中
+                     $('#viewsetSubBtn').click(this.changeViewSet);
+                    //样式设置恢复默认值
+                     $('#viewsetResetBtn').click(this.resetViewSet);
+                 }
+             }
+		},
+		//恢复默认设置,标题和文本框组件的文本内容不恢复默认值
+		resetViewSet:function(){
+			this.resetViewFlag=true;
+			var containerId=selectChartWidget.attr('id');
+			var cfgViewSet=charts[containerId].config.viewSet;
+			charts[containerId].config.defaultSet.titleName=cfgViewSet.titleName;
+			charts[containerId].config.defaultSet.context=cfgViewSet.context;
+			this.setViewForm();
+		},
+		changeViewSet:function(){
+			var chartType=selectChartWidget.attr('chart-type');
+            var containerId=selectChartWidget.attr('id');
+            var chartContainerId=selectChartWidget.children('.chart_container').attr('id');
+            var table=chartType=='icon'?'#indicIconTable tbody tr':null;
+			var viewSetformJsonNew=this.getFormData('.form-horizontal',table,'indicIcon',null,chartType);
+            var titleName;
+            if(chartType=='textbox'){
+            	titleName=viewSetformJsonNew['context'];
+            }else{
+            	titleName=viewSetformJsonNew['titleName'];
+            }
+            var fontStyle = viewSetformJsonNew['fontStyle'];
+            var isShow = viewSetformJsonNew['titleShow']=='Y'?true:false;
+            changeTitleStyle($('#'+containerId),titleName,fontStyle,isShow,chartType);
+            charts[containerId].config.viewSet=viewSetformJsonNew;
+            var chartConfig=assembleChartConfig(chartType,charts[containerId].config);
+            //根据设置的参数重新渲染图表
+            var oldChart=charts[containerId].chart;
+            if(oldChart){
+                if(chartType=='icon'||chartType=='dynamicNum'||chartType=='carouselTable'||chartType=='cockpitTitle'||chartType=='datetime'||chartType=='textbox'){
+                    oldChart.html('');
+                    var chart=getChartByType(chartType,chartConfig,chartContainerId);
+                    charts[containerId].chart=chart;
+                }else{
+                    oldChart.dispose();//销毁实例
+                    if(oldChart.isDisposed){//当前实例是否已经被释放
+                        var chart=getChartByType(chartType,chartConfig,chartContainerId);
+                        //图表加载完成执行的函数
+                       // chart.on('finished',function(){
+                            //this.resize();
+                        //})
+                        charts[containerId].chart=chart;
+                    }
+                }
+            }
+		},
+        //参数说明：1、formSelector：form表单选择器；2、tableSelector：table选择器；3、tableDataName：table数据放入json格式中的名称；4、tableExtAttr：获取单元格额外属性的值；
+        getFormData:function(formSelector,tableSelector,tableDataName,extAttr,chartType){
+            var setForm = {};
+            if(formSelector){
+                var form=$(formSelector);
+                var checkNames=[];
+                //获取页面上所有的checkbox和radio
+                var checkboxs=$(formSelector+' input[type=checkbox]');
+                var radios=$(formSelector+' input[type=radio]');
+                $.each(checkboxs,function(){
+                    if($.inArray(this.name,checkNames)==-1){
+                        checkNames.push(this.name);
+                    }
+                })
+                $.each(radios,function(){
+                    if($.inArray(this.name,checkNames)==-1){
+                        checkNames.push(this.name);
+                    }
+                })
+                var serializeForm = form.serializeArray();
+                var serializeNames=[];
+                $.each(serializeForm, function() {
+                    var formName=this.name;
+                    var formValue=this.value;
+                    setForm[formName] = formValue;
+                    if($.inArray(formName,serializeNames)==-1){
+                        serializeNames.push(formName);
+                    }
+                });
+                //将serializeArray()没有获取到的checkbox或者radio补全，补值为‘’，(因为当checkbox或者radio没有被checked的话serializeArray方法是不能取到对应的字段的)
+                $.each(checkNames, function(index,value) {
+                    if($.inArray(value,serializeNames)==-1){
+                        setForm[value] = '';
+                    }
+                })
+            }
+            if(tableSelector){
+                var table=$(tableSelector);
+                var tableData=[];
+                table.each(function() {
+                    var rowData = {};
+                    $(this).find('td').each(function() {
+                        var taName=$(this).attr('dataName');
+                        if(taName){
+                            if($(this).children('select').length>0){
+                                rowData[taName]=$.trim($(this).children('select').val());
+                            }else{
+                                if(extAttr){
+                                    rowData[taName]=$.trim($(this).attr(extAttr));
+                                }else{
+                                    rowData[taName]=$.trim($(this).text());
+                                }
+                            }
+                        }
+                    });
+                    tableData.push(rowData);
+                });
+                setForm[tableDataName]=tableData;
+            }
+            var setFormJson=JSON.parse(JSON.stringify(setForm));
+            if(chartType=='doubleAxis'){
+            	setFormJson=this.assembleFormData(setFormJson);
+            }
+            return setFormJson;
+		},
+		//如果是双Y轴，则需要重新组合y轴相关的配置信息
+		assembleFormData:function(formData){
+			if(formData){
+				var yAxisLeft=formData.yAxisLeft||'';
+				var yAxisRight=formData.yAxisRight||'';
+				var yAxisLabelLeft=formData.yAxisLabelLeft||'';
+				var yAxisLabelRight=formData.yAxisLabelRight||'';
+				var seriesLabelLeft=formData.seriesLabelLeft;
+				var seriesLabelRight=formData.seriesLabelRight;
+				var seriesLabelPositionLeft=formData.seriesLabelPositionLeft;
+				var seriesLabelPositionRight=formData.seriesLabelPositionRight;
+				var yAxis={
+						yAxisLeft:yAxisLeft,
+						yAxisRight:yAxisRight,
+				};
+				var yAxisLabel={
+						yAxisLabelLeft:yAxisLabelLeft,
+						yAxisLabelRight:yAxisLabelRight,
+				};
+				var seriesLabel={
+						seriesLabelLeft:seriesLabelLeft,
+						seriesLabelRight:seriesLabelRight
+				}
+				var seriesLabelPosition={
+						seriesLabelPositionLeft:seriesLabelPositionLeft,
+						seriesLabelPositionRight:seriesLabelPositionRight,
+				}
+				formData.yAxis=yAxis;
+				formData.yAxisLabel=yAxisLabel;
+				formData.seriesLabel=seriesLabel;
+				formData.seriesLabelPosition=seriesLabelPosition;
+			}
+			return formData;
+		},
+		imgClick:function(item){
+            var s = gridster.serialize();
+            if(s.length>=36){
+                this.$message({
+		              showClose: true,
+		              type: 'info',
+		              message: '最多只能添加36个组件，不能再多啦！',
+		              duration:1500
+		            });  
+                return;
+            }
+            if(item){
+                var chartType=item.MENU_TYPE;
+                var chartName=item.MENU_NAME;
+                this.widgetIndex = this.widgetIndex + 1;
+                var liId=this.layoutCode+"_"+ chartType+ "_"+  this.widgetIndex;
+                if(this.defaultLiId!=''){
+            		this.setBorderStyle(liId);
+            	}
+                this.defaultLiId = liId;
+                var chartContainerId=this.layoutCode+"_"+chartType+"_chart_"+ this.widgetIndex;
+                var li;
+                if(chartType.indexOf('border') != -1){
+                     var corner= ""; 
+   			         var liClass='';
+                   	 switch(chartType){
+                			case 'border':
+                				corner="<i class='widget-border-style1-topL'></i>"
+   		                            +"<i class='widget-border-style1-topR'></i>"
+   		                            +"<i class='widget-border-style1-bottomL'></i>"
+   		                            +"<i class='widget-border-style1-bottomR'></i>";
+   		                    liClass="widget-border-style1";      
+                				break;
+                			case 'border2':
+                				liClass="widget-border-style2"; 
+                				break;
+                   	 } 
+   	   				li = "<li style='z-index:0!important;' class='"+liClass+"' chart-name='"
+   	                  + chartName+ "' chart-type='"+ chartType+ "' id='"+liId+"' chart-index='"+this.widgetIndex
+   	                  + "' onclick='selWidget(this)'>"
+   	                  +corner
+   	                  + "</li>";                 	
+                }else if(chartType == 'cockpitTitle'||chartType == 'datetime'||chartType == 'textbox'){
+                	li = "<li class='widget-border-style1-border' chart-name='"
+                        + chartName
+                        + "' chart-type='"
+                        + chartType
+                        + "' id='"
+                        +liId
+                        +"' chart-index='"
+                        +this.widgetIndex
+                        +"'"
+                        + " onclick='selWidget(this)'>"                        
+                        +"<div class='chart_container tool_container' id='"
+                        +chartContainerId
+                        +"' style='"+this.toolContainerStyle+"'>"
+                        +"</div>"
+                        + "</li>";
+                }else{
+	                	li = "<li class='widget-border-style1-border' chart-name='"
+		    				+ chartName
+		    				+ "' chart-type='"
+		    				+ chartType
+		    				+ "' id='"
+		    				+liId
+		    				+"' chart-index='"
+		    				+this.widgetIndex
+		    				+"'"
+		    				+ " onclick='selWidget(this)'>"		    								
+							+"<div class='title_container'><span>未定义图表"+this.widgetIndex+"</span></div>"
+							+"<div class='chart_container widget_container' id='"
+							+chartContainerId
+							+"' style='"+this.widgetContainerStyle+"'>"
+							+"</div>"
+							+ "</li>";
+                }               
+                if (chartType == 'dynamicNum') {
+                    gridster.add_widget(li, 20, 5, 1, 1);
+                } else if (chartType == 'datetime') {
+                    gridster.add_widget(li, 20, 1, 1, 1);
+                } else if(chartType=='cockpitTitle'){
+                    gridster.add_widget(li, 50, 4, ((countcols-50)/2+2), 1);
+    			}else if(chartType=='textbox'){
+    				 gridster.add_widget(li, 17, 10, 1, 1);
+    			}else {
+                    gridster.add_widget(li, 20, 15, 1, 1);
+                }
+                selectChartWidget=$('#'+liId);
+                var chart = getChartByType(chartType, null, chartContainerId);
+                charts[liId] = {
+        				widgetId:liId,//组件ID
+        				chartContainerId:chartContainerId,//图表容器ID
+        				chartType : chartType,//组件类型
+        				chart : chart,//图表
+        				config : {
+        					viewSet : {},//样式设置
+        					dataSet : {},//数据集
+        					dataModelSet:{},//数据模型
+        				    defaultSet:{},// 样式默认设置
+        				}
+        		};
+                //加载视图属性设置的页面 时间控件不需要拉取数据              
+                if(chartType!=='cockpitTile'&&chartType!=='datetime'&&chartType!='textbox'){
+                	this.setData();
+                }
+                this.setViewForm();
+                this.setDefaultPage();
+            }
+		},
+        //组件大小变化，图表也跟着变化
+        onResizeStop:function(e, ui, $widget){
+            var chart = charts[$widget.attr('id')].chart;
+            if (chart) {
+                chart.resize();
+            }
+		},
+      //清空所有组件
+		delAllWidget:function(){			
+		      this.$confirm('确定清空所有组件吗？', '提示', {
+		            cancelButtonText: '取消',
+		            confirmButtonText: '确定',
+		            closeOnClickModal:false,//是否可通过点击遮罩关闭 MessageBox
+		            closeOnPressEscape:false,//是否可通过按下 ESC 键关闭 MessageBox
+		            type: 'warning'
+		          }).then(() => {
+	        	     var type = '1';
+				     gridster.remove_all_widgets();
+				     for(var key in charts){
+				    	 delete charts[key];
+				     }
+				     vm.chartName='';
+					 vm.setDefaultPage(type);
+				     //清空数据和样式设置页面
+					 $('#datamodelList').html('');
+					 $('#styleSet').html('');
+		            this.$message({
+		              showClose: true,
+		              type: 'success',
+		              message: '删除成功!',
+		              duration:1500
+		            });
+		          }).catch(() => {
+		            /* this.$message({
+		              showClose: true,
+		              type: 'info',
+		              message: '已取消删除',
+		              duration:1500
+		            });     */      
+		          });						 
+		},
+        clickBtn:function(btnType,index){
+            switch (btnType) {
+                case 'saveBtn':
+                    this.saveWidget();
+                    break;
+                case 'delAllBtn':
+                    this.delAllWidget();
+                    break;
+                case 'zoomBtn':
+                    this.toggleGridContainerSize(index);
+                    break;
+                case 'previewBtn':
+                    this.togglepreviewEdit('preview');
+                    break;
+                case 'backEditBtn':
+                    this.togglepreviewEdit('edit');
+                    break;
+               case 'toggleBgBtn':
+                    this.toggleBg();
+                    break;
+            }
+        },
+        toggleBg:function(){
+			if(0<this.cockpitBgIndex&&this.cockpitBgIndex<=3){
+	        	this.gridsterClass='grid_container'+this.cockpitBgIndex;
+	        	if(this.cockpitBgIndex==3){
+	        		this.cockpitBgIndex=0;
+	        	}else{
+	        		this.cockpitBgIndex++;
+	        	}
+	        }else{
+	        	this.gridsterClass='grid_container0';
+	        	this.cockpitBgIndex++;
+	        }
+		},
+        //保存组件信息
+        saveWidget:function(){
+        	var me=this;
+        	var s = gridster.serialize();
+            if (s.length == 0) {
+                this.$message({
+                	  showClose: true,
+		              type: 'info',
+		              message: '请至少创建一个组件！',
+		              duration:1500
+		            });
+                return;
+            }        
+            var layout={
+            		recordId:this.layoutId,
+            		name:this.layoutName,
+            		code:this.layoutCode,
+            }
+            //复制charts对象，删除不必要的属性然后保存
+            var cloneCharts={};
+            $.extend(true,cloneCharts,charts);
+            for(var index in cloneCharts){
+            	var chart=cloneCharts[index];
+            	if(chart.chart){
+            		delete chart.chart;
+            	}
+            	if(chart.config){
+            		delete chart.config.dataSet;
+            		delete chart.config.defaultSet;
+	            	if(chart.config.dataModelSet){
+	            		delete chart.config.dataModelSet.dimensionsHtml;
+	            		delete chart.config.dataModelSet.measuresHtml;
+	            		delete chart.config.dataModelSet.pageNum;
+	            	}
+            	}
+            }
+            var cockpitLayoutInfor={
+            		cockpitLayout:layout,
+            		charts:cloneCharts,
+            }          
+		   var jsonDataList= me.rquestParams('POST',configpre.api_saveLayout,cockpitLayoutInfor);
+           ajaxrequestasync(jsonDataList,function(code,msg,json){
+				if(code=='200'){
+					me.layoutId=json.recordId;
+					me.createHtmlTemplet();
+				}else{
+					me.$message({
+						  showClose: true,
+			              type: 'error',
+			              message: '保存失败',
+			              duration:1500
+			            }); 
+				}
+			});
+		},
+        //生成html模板
+		createHtmlTemplet:function() {
+			var me=this;
+            var container = $('#gridContainer').clone();
+            container.find('.chart_container').find('div').remove();//删除图表内容
+            container.find('.gs-resize-handle').remove();//删除组件拖把
+            /* container.find('.closeBtn').remove(); *///删除删除按钮
+            container.find('li').removeAttr('onclick');//删除绑定的事件
+            container.find('li').removeClass('widget-border-style1-border');//删除选中带的边框
+            //删除不必要的属性
+            container.find('.chart_container').removeAttr('_echarts_instance_');
+            container.find('.chart_container').removeAttr('style');
+            container.find('.widget_container').attr('style',this.widgetContainerStyle);
+            container.find('.tool_container').attr('style',this.toolContainerStyle);
+            var styleEl = $('#gridster-stylesheet').prop('outerHTML');
+            var containerEl = container.prop('outerHTML');
+            var htmlHeader='<html>'+ 
+			            	'<head>'+
+			            	'<meta charset=\"UTF-8\">'+
+			            	'<title></title>'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/gridster/jquery.gridster.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/gridstacklayout.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../font_third/fontcloudhis/fontstyle.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../font_third/font-ali/iconfont.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../font_third/font-awesome/css/site.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../font_third/font-awesome/font-awesome/css/font-awesome.css\">'+
+			            	'<link rel=\"stylesheet\" type=\"text/css\" href=\"../css/normalize.min.css\"/>';
+			var jsContext='<scrip'+ 't type=\"text/javascript\" src=\"../js/jquery/jquery-1.10.2.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/echarts/echarts.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/config.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/chartsutil.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/echarts/echarts-action-carousel.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/numberAnimate/numberAnimate.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/jsonrequest/ajaxrequestasync.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/jsonrequest/ajaxrequestsync.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\" src=\"../js/assemblechartData.js\"></s'+ 'cript>'
+							+'<scrip'+ 't type=\"text/javascript\">'
+							+'getLayOut(\"'+this.layoutCode+'\");' 
+							+'</s'+'cript>'
+            var htmlContext = htmlHeader+styleEl + '</head><body class="cockpit '+this.gridsterClass+'">' + containerEl+jsContext+'</body></html>';
+            htmlContext=htmlContext.replace(/%/g,'%25');//将百分号转义
+            var fileName=me.layoutCode;
+			var fileType="html";
+			var fileInfor={
+					fileName:fileName,
+					fileType:fileType,
+					data:htmlContext,
+			}
+			var fileJsonData=me.rquestParams('POST',configpre.api_createFile,fileInfor);
+			ajaxrequestasync(fileJsonData,function(code,msg,json){
+				 if(code=='200'){
+					 var templateUrl=json.body;
+					 me.$alert('保存成功，模板路径：'+templateUrl, '提示', {
+				          confirmButtonText: '确定',
+				        });
+				 }else{
+					 me.$message({
+						  showClose: true,
+			              type: 'error',
+			              message: '模板文件生成失败！',
+			              duration:1500
+			            }); 
+				 }
+			 })
+		},         
+        //初始化表单数据
+		initForm:function(options, formSelector) {
+			//默认参数
+			var defaults = {
+				jsonValue : options,
+				isDebug : false
+				//是否需要调试，这个用于开发阶段，发布阶段请将设置为false，默认为false,true将会把name value打印出来
+			}
+			//设置参数
+			var setting = defaults;
+			var form = $(formSelector);
+			jsonValue = setting.jsonValue;
+			//如果传入的json字符串，将转为json对象
+			if ($.type(setting.jsonValue) === 'string') {
+				jsonValue = $.parseJSON(jsonValue);
+			}
+			//如果传入的json对象为空，则不做任何操作
+			if (!$.isEmptyObject(jsonValue)) {
+				var debugInfo = '';
+				$.each(jsonValue, function(key, value) {
+					//是否开启调试，开启将会把name value打印出来
+					if (setting.isDebug) {
+						alert("name:" + key + "; value:" + value);
+						debugInfo += "name:" + key + "; value:" + value + " || ";
+					}
+					var formField = form.find("[name='" + key + "']");
+					if ($.type(formField[0]) === "undefined") {
+						if (setting.isDebug) {
+							alert("can not find name:[" + key + "] in form!!!"); //没找到指定name的表单
+						}
+					} else {
+						var fieldTagName = formField[0].tagName.toLowerCase();
+						if (fieldTagName == "input") {
+							if (formField.attr("type") == "radio") {
+								if (value) {//如果有值则把对应的值选中，否则则移除被选中的状态
+									$("input:radio[name='" + key+ "'][value='" + value + "']").attr("checked", "checked");
+								} else {
+									$("input:radio[name='" + key + "']").removeAttr("checked");
+								}
+							} else if (formField.attr("type") == "checkbox") {
+								if (value) {//如果有值则把对应的值选中，否则则移除被选中的状态
+									$("input:checkbox[name='" + key+ "'][value='" + value + "']").attr("checked", "checked");
+								} else {
+									$("input:checkbox[name='" + key + "']").removeAttr("checked");
+								}
+							} else {
+								formField.val(value);
+							}
+						} else if (fieldTagName == "select") {
+							formField.val(value);
+						} else if (fieldTagName == "textarea") {
+							formField.val(value);
+						} else {
+							formField.val(value);
+						}
+					}
+				})
+				if(setting.isDebug){
+					alert(debugInfo);
+				}
+			}
+			return form;    //返回对象，提供链式操作
+		},
+        //初始化图表表格数据
+		initTableData:function(options, tableSelector) {
+			if (tableSelector) {
+				var table = $(tableSelector);
+				table.each(function() {
+					var tIndicId;
+					var tdSelect;
+					$(this).find('td').each(function() {
+						var taName = $(this).attr('dataName');
+						if (taName == 'indic_id') {
+							tIndicId = $(this).text();
+						}
+						if ($(this).children('select').length > 0) {
+							tdSelect = $(this).children('select');
+						}
+					})
+					$.each(options, function(index, value) {
+						if (tIndicId && value['indic_id'] == tIndicId) {
+							tdSelect.val(value['icon_code']);
+							return;
+						}
+					})
+				})
+			}
+		},
+        loadMenuData:function(method,api,data){
+            var me = this;
+            var jsonDataList = this.rquestParams(method,api,data);
+            ajaxrequestasync(jsonDataList,function(code,msg,json){
+                if(code=='200'){
+                    var body=json.body;
+                    me.topMenu = body.topMenu;
+                    me.secondMenu = body.secondMenu;
+                    me.subMenu = body.subMenu;
+                }
+            });
+        },
+        rquestParams:function(method,api,data){
+            var jsonDataList={
+                httpMethod:method,
+                url:api,
+                data:data?JSON.stringify(data):''
+            };
+            return jsonDataList;
+        },
+       /* delWidget:function(event){
+        	if(!$.isEmptyObject(selectChartWidget)&&event.keyCode==46){
+        		this.$confirm('确定删除该组件吗？', '提示', {
+		            cancelButtonText: '取消',
+		            confirmButtonText: '确定',
+		            closeOnClickModal:false,//是否可通过点击遮罩关闭 MessageBox
+		            closeOnPressEscape:false,//是否可通过按下 ESC 键关闭 MessageBox
+		            type: 'warning'
+		          }).then(() => {
+	        	    var type = '1';
+		 			var widgetElId=selectChartWidget.attr('id');
+		 			//从画布中删除该组件,widget:被删除的组件，true：表示删除该组件其他组件位置不变，不传表示删除该组件，其他组件位置根据已经删除的组件位置进行上移
+		 			gridster.remove_widget(selectChartWidget,true);
+		 			//删除该组件的相关配置
+		 			delete charts[widgetElId];
+		            this.chartName='';
+		            this.setDefaultPage(type);
+		            this.$message({
+		              showClose: true,
+		              type: 'success',
+		              message: '删除成功!',
+		              duration:1500
+		            });
+		          }).catch(() => {		              
+		          });      		
+        	}
+        } */
+	}
+});
+//选中一个组件需要做的操作
+function selWidget(obj) {
+	vm.liFocus = true;
+	if (obj) {
+        var chartType=$(obj).attr('chart-type');
+        vm.setBorderStyle(obj.id,chartType);
+        selectChartWidget = $(obj);
+	    if(chartType == 'datetime'||chartType == 'cockpitTitle'){
+            vm.setDefaultPage();
+            vm.setViewForm();
+		}else{
+            vm.setViewForm();
+            vm.setData();
+            vm.setDefaultPage();
+		}
+	}
+}
+ document.onkeyup=function(event){
+	if(!$.isEmptyObject(selectChartWidget)&&event.keyCode==46){
+		vm.$confirm('确定删除该组件吗？', '提示', {
+            cancelButtonText: '取消',
+            confirmButtonText: '确定',
+            closeOnClickModal:false,//是否可通过点击遮罩关闭 MessageBox
+            closeOnPressEscape:false,//是否可通过按下 ESC 键关闭 MessageBox
+            type: 'warning'
+          }).then(() => {
+    	    var type = '1';
+ 			var widgetElId=selectChartWidget.attr('id');
+ 			//从画布中删除该组件,widget:被删除的组件，true：表示删除该组件其他组件位置不变，不传表示删除该组件，其他组件位置根据已经删除的组件位置进行上移
+ 			gridster.remove_widget(selectChartWidget,true);
+ 			//删除该组件的相关配置
+ 			delete charts[widgetElId];
+ 			vm.chartName='';
+ 			vm.setDefaultPage(type);
+ 			vm.$message({
+              showClose: true,
+              type: 'success',
+              message: '删除成功!',
+              duration:1500
+            });
+          }).catch(() => {               
+          });      		
+	}
+} 
+</script>
+</body>
+</html>

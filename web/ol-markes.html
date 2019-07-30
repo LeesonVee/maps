@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markes</title>
+    <link rel="stylesheet" href="resources/ol/ol.css" type="text/css">
+    <script src="resources/ol/ol.js"></script>
+    <script src="resources/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=FXtbv5ywNGiHETeHwyMfqGZNSESGWta6"></script>
+</head>
+<body>
+<div id="map" style="width:500px;height: 400px;"></div>
+<input id="address" name="address" type="text" value="上海市闵行区浦江镇景江苑D区"/>
+<div id="btns">
+    <button onclick="addMarks('organ','机构',{lng:'121.468467',lat:'30.994287'})">添加marks(机构)</button>&nbsp;&nbsp;
+    <button onclick="addMarks('doctor','医生',{lng:'121.529983',lat:'31.072511'})">添加marks(医院)</button>&nbsp;&nbsp;
+    <button onclick="addMarks('disease','流感',{lng:'121.491463',lat:'31.111105'})">添加marks(疾病)</button>&nbsp;&nbsp;
+    <button onclick="cleanMarks()">清除marks</button>&nbsp;&nbsp;
+    <button onclick="getLocation()">定位</button>&nbsp;&nbsp;
+    <button onclick="findAddress()">检索</button>&nbsp;&nbsp;
+</div>
+<div id="demo">123</div>
+<script type="text/javascript">
+    function findAddress(){
+        var address = document.getElementById("address").value;
+
+        var myGeo = new BMap.Geocoder();
+        // 将地址解析结果显示在地图上，并调整地图视野
+        myGeo.getPoint(address, function(point){
+            if (point) {
+                debugger;
+                //121.501102,31.084009
+                //121.511972,31.087898
+                //console.info(JSON.stringify(point));
+                addMarks('organ','机构',point);
+            }
+        },"上海市");
+    }
+
+
+    var x = document.getElementById("demo");
+    function getLocation() {
+        if (navigator.geolocation) {
+            var getOptions = {
+                //是否使用高精度设备，如GPS。默认是true
+                enableHighAccuracy:true,
+                //超时时间，单位毫秒，默认为0
+                timeout:155000,
+                //使用设置时间内的缓存数据，单位毫秒
+                //默认为0，即始终请求新数据
+                //如设为Infinity，则始终使用缓存数据
+                maximumAge:0
+            };
+            navigator.geolocation.getCurrentPosition(showPosition,showError,getOptions);
+        } else {
+            console.log("请求失败")
+        }
+    }
+    function showPosition(position) {
+        console.log(position.coords.latitude + "   "
+            + position.coords.longitude)
+    }
+    function showError(error) {
+        console.log("H5错误编码  " + error.code)
+
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                x.innerHTML = "User denied the request for Geolocation."
+                break;
+            case error.POSITION_UNAVAILABLE:
+                x.innerHTML = "Location information is unavailable."
+                break;
+            case error.TIMEOUT:
+                x.innerHTML = "The request to get user location timed out."
+                break;
+            case error.UNKNOWN_ERROR:
+                x.innerHTML = "An unknown error occurred."
+                break;
+        }
+    }
+
+    var layer = new ol.layer.Vector({
+        source: new ol.source.Vector()
+    })
+
+    var map = new ol.Map({
+        layers: [
+            new ol.layer.Tile({
+                source: new ol.source.OSM()
+            }),
+            layer
+        ],
+        target: 'map',
+        view: new ol.View({
+            projection: 'EPSG:4326',
+            center: [121.48789949,31.24916171],
+            zoom: 10
+        })
+    });
+
+
+
+    function addMarks(imgName,lableName,coord){
+        // 创建一个Feature，并设置好在地图上的位置
+        var anchor = new ol.Feature({
+//            geometry: new ol.geom.Point([121.48789949,31.24916171])
+            geometry: new ol.geom.Point([coord.lng,coord.lat])
+        });
+        // 设置样式，在样式中就可以设置图标
+        anchor.setStyle(new ol.style.Style({
+            image: new ol.style.Icon({
+                opacity: 0.7,
+//                src: 'resources/img/doctor.jpg'
+                src: 'resources/img/'+imgName+'.jpg'
+            }),
+            text: new ol.style.Text({
+                //对齐方式
+                textAlign: 'center',
+                //文本基线
+                textBaseline: 'middle',
+                //字体样式
+                font: 'normal 14px 微软雅黑',
+                //文本内容
+                //text: feature.get('name'),
+//                text: "医生",
+                text: lableName,
+                //填充样式
+                fill: new ol.style.Fill({
+                    color: '#aa3300'
+                }),
+                //笔触
+                stroke: new ol.style.Stroke({
+                    color: '#ffcc33',
+                    width: 2
+                })
+            })
+        }));
+        // 添加到之前的创建的layer中去
+        layer.getSource().addFeature(anchor);
+    }
+
+    function cleanMarks(){
+        layer.getSource().clear();
+    }
+</script>
+</body>
+</html>

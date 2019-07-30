@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markes</title>
+    <link rel="stylesheet" href="resources/ol/ol.css" type="text/css">
+    <script src="resources/ol/ol.js"></script>
+    <script src="resources/tooltip.js"></script>
+    <script src="resources/popper.js"></script>
+    <script src="resources/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=FXtbv5ywNGiHETeHwyMfqGZNSESGWta6"></script>
+    <link rel="stylesheet" href="resources/bootstrap/bootstrap.css" type="text/css">
+    <script src="resources/bootstrap/bootstrap.js"></script>
+    <script src="resources/index.js"></script>
+
+</head>
+<body>
+<div id="map" style="width:500px;height: 400px;">
+<div id="btns"><!--121.520928,31.058963    121.468467,30.994287-->
+    <button onclick="addMarks('organ','机构',{lng:'121.520928',lat:'31.058963'})">添加marks(机构)</button>&nbsp;&nbsp;
+</div>
+<div id="popup" title="Welcome to OpenLayers"></div>
+<script type="text/javascript">
+    var markers;
+    var projection = ol.proj.get("EPSG:3857");
+    var resolutions = [];
+    for(var i=0; i<19; i++){
+        resolutions[i] = Math.pow(2, 18-i);
+    }
+    var tilegrid  = new ol.tilegrid.TileGrid({
+        origin: [0,0],
+        resolutions: resolutions
+    });
+
+    var baidu_source = new ol.source.TileImage({
+        projection: projection,
+        tileGrid: tilegrid,
+        tileUrlFunction: function(tileCoord, pixelRatio, proj){
+            if(!tileCoord){
+                return "";
+            }
+            var z = tileCoord[0];
+            var x = tileCoord[1];
+            var y = tileCoord[2];
+
+            if(x<0){
+                x = "M"+(-x);
+            }
+            if(y<0){
+                y = "M"+(-y);
+            }
+
+            return "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x="+x+"&y="+y+"&z="+z+"&styles=pl&udt=20151021&scaler=1&p=1";
+        }
+    });
+    //先声明一个点位图层，并设置好样式
+    var layer = new ol.layer.Vector({
+        source: new ol.source.Vector({
+            projection: 'EPSG:3857'
+        })
+    })
+
+
+
+
+    var baidu_layer = new ol.layer.Tile({
+        source: baidu_source
+    });
+
+    var map = new ol.Map({
+        target: 'map',
+        layers: [baidu_layer,layer],
+        view: new ol.View({
+            projection: 'EPSG:4326',
+            center: [121.473641,31.230989],
+            zoom: 9
+        })
+    });
+    var element = document.getElementById('popup');
+    var popup = new ol.Overlay({
+        element: element,
+//        positioning: 'bottom-center',
+//        stopEvent: false,
+//        offset: [0, -50]
+    });
+    map.addOverlay(popup);
+    map.on('singleclick', function (evt) {
+        debugger;
+        var pixel = map.getEventPixel(evt.originalEvent);
+        var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+            return feature;
+        });
+        if (feature) {
+            var coordinates = feature.getGeometry().getCoordinates();
+            popup.setPosition(coordinates);
+            $(element).popover({
+                'title':feature.get('name'),
+                'placement': 'top',
+                'html': true,
+                'content': '<div style="color:red;">123</div>'
+            });
+            $(element).popover('show');
+        } else {
+            $(element).popover('destroy');
+        }
+    });
+
+//    var popup = new ol.Overlay({
+//        element: document.getElementById('popup')
+//    });
+//    map.addOverlay(popup);
+//
+//    map.on('singleclick', function(evt) {
+//        var element = popup.getElement();
+//        var coordinate = evt.coordinate;
+//        //$(element).popover('destroy');
+//        popup.setPosition(coordinate);
+//        $(element).popover({
+//            //title:'Hello',
+//            placement: 'top',
+//            animation: false,
+//            html: true,
+//            content: '<table border="1"><tr><td>123</td></tr></table>'
+//        });
+//        $(element).popover('show');
+//    });
+
+    function addMarks(imgName,lableName,coord){
+        // 创建一个Feature，并设置好在地图上的位置
+        var anchor = new ol.Feature({
+//            geometry: new ol.geom.Point([121.48789949,31.24916171])
+            geometry: new ol.geom.Point([coord.lng,coord.lat]),
+            name:'museum'
+        });
+        // 设置样式，在样式中就可以设置图标
+        anchor.setStyle(new ol.style.Style({
+            image: new ol.style.Icon({
+                radius: 20,
+                opacity: 0.7,
+                src: 'resources/img/'+imgName+'.jpg'
+            }),
+            text: new ol.style.Text({
+                //对齐方式
+                textAlign: 'center',
+                //文本基线
+                textBaseline: 'middle',
+                //字体样式
+                font: 'normal 14px 微软雅黑',
+                //文本内容
+                //text: feature.get('name'),
+//                text: "医生",
+                text: lableName,
+                //填充样式
+                fill: new ol.style.Fill({
+                    color: '#aa3300'
+                }),
+                //笔触
+                stroke: new ol.style.Stroke({
+                    color: '#ffcc33',
+                    width: 2
+                })
+            })
+        }));
+        // 添加到之前的创建的layer中去
+        layer.getSource().addFeature(anchor);
+    }
+    function addMarks2(){
+
+        //实例化一个矢量图层Vector作为绘制层
+        var source = new ol.source.Vector();
+
+        //实例一个线(标记点)的全局变量
+        var geometry = new ol.geom.LineString(); //线,Point 点,Polygon 面
+
+        //散列点数组，放置的点的位置数据
+        var coordinate = [
+            [117.340367,32.977329],
+            [117.34173,32.970506]
+        ];
+        addPonitToGeometry(coordinate);
+        var LineStringFeature = new ol.Feature(geometry); //绘制线的数据
+
+        //将线添加到Vector绘制层上
+        source.addFeature(LineStringFeature);
+        var vectorLayer = new ol.layer.Vector({
+            source: source,
+            style: new ol.style.Style({
+                // 线
+                stroke: new ol.style.Stroke({
+                    color: 'red',
+                    width: 4
+                }),
+
+            })
+        });
+        map.addLayer(vectorLayer); //将绘制层添加到地图容器中
+    }
+
+    //添加标记点
+    function addPonitToGeometry(arr) {
+        for (var i = 0; i < arr.length; i++) {
+            geometry.appendCoordinate(arr[i]);
+        }
+    }
+
+
+    function addMarker3(){
+
+        if(popup!=null){
+            onPopupMouseDown(); //先移除掉
+        }
+        feature = new OpenLayers.Feature(tiled, new OpenLayers.LonLat(116.34851,33.22630));
+        marker = feature.createMarker();
+        markers.addMarker(marker);
+
+        marker.events.register("mousedown", marker, function(evt){
+            if (popup == null) {
+                popup = new OpenLayers.Popup("click",
+                    new OpenLayers.LonLat(116.34851,33.22630),
+                    new OpenLayers.Size(100,100),
+                    "click me",
+                    true);
+                popup.setBorder("#999999 solid 1px");
+                popup.closeOnMove = true;
+                map.addPopup(popup);
+            } else {
+                popup.toggle();
+            }
+            OpenLayers.Event.stop(evt);
+        });
+    }
+
+    //移除Popup
+    function onPopupMouseDown() {
+        markers.map.removePopup(popup);
+        popup.destroy();
+        popup = null;
+    }
+</script>
+</body>
+</html>

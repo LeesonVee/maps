@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="resources/ol/ol.css" />
+    <style type="text/css">
+        body, #mainMap {
+            border: 0px;
+            margin: 0px;
+            padding: 0px;
+            width: 100%;
+            height: 100%;
+            font-size: 13px;
+        }
+    </style>
+    <script type="text/javascript" src="resources/ol/ol.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=FXtbv5ywNGiHETeHwyMfqGZNSESGWta6"></script>
+
+</head>
+<body>
+
+<div id="mainMap">
+
+</div>
+
+</body>
+</html>
+<script type="text/javascript">
+    // 自定义分辨率和瓦片坐标系
+    var resolutions = [];
+    var maxZoom = 18;
+
+    // 计算百度使用的分辨率
+    for (var i = 0; i <= maxZoom; i++) {
+        resolutions[i] = Math.pow(2, maxZoom - i);
+    }
+    var tilegrid = new ol.tilegrid.TileGrid({
+        origin: [0, 0],
+        resolutions: resolutions    // 设置分辨率
+    });
+
+    // 创建百度地图的数据源
+    var baiduSource = new ol.source.TileImage({
+        projection: 'EPSG:3857',
+        tileGrid: tilegrid,
+        tileUrlFunction: function (tileCoord, pixelRatio, proj) {
+            var z = tileCoord[0];
+            var x = tileCoord[1];
+            var y = tileCoord[2];
+
+            // 百度瓦片服务url将负数使用M前缀来标识
+            if (x < 0) {
+                x = -x;
+            }
+            if (y < 0) {
+                y = -y;
+            }
+            return "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x="+x+"&y="+y+"&z="+z+"&styles=pl&udt=20151021&scaler=1&p=1";
+            //return "http://localhost:8120/hub/static/imgXYZ/sqzg1/"+z+"-"+x+"-"+y+".jpg";
+            //return "title/" + z + "/" + x + "/" + y + ".jpg";
+        }
+    });
+
+    // 百度地图层
+    var baiduMapLayer2 = new ol.layer.Tile({
+        source: baiduSource
+    });
+
+//    var style = new ol.style.Style({
+//        fill: new ol.style.Fill({ //矢量图层填充颜色，以及透明度
+//            color: 'rgba(255, 255, 255, 0.6)'
+//        }),
+//        stroke: new ol.style.Stroke({ //边界样式
+//            color: '#319FD3',
+//            width: 1
+//        }),
+//        text: new ol.style.Text({ //文本样式
+//            font: '12px Calibri,sans-serif',
+//            fill: new ol.style.Fill({
+//                color: '#000'
+//            }),
+//            stroke: new ol.style.Stroke({
+//                color: '#fff',
+//                width: 3
+//            })
+//        })
+//    });
+
+    var styles = [
+        new ol.style.Style({
+            stroke: new ol.style.Stroke({       // 线样式
+                color: 'blue',
+                width: 3
+            }),
+            fill: new ol.style.Fill({           // 填充样式
+                color: 'rgba(0, 0, 255, 0.1)'
+            })
+        }),
+        new ol.style.Style({
+            image: new ol.style.Circle({   // 点样式
+                radius: 5,          // 圆形符号的半径
+                fill: new ol.style.Fill({   // 圆形符号的填充样式
+                    color: 'red'
+                })
+            }),
+            // 将样式设置为多边形外环独有的样式
+//            geometry: function(feature){
+//                // 返回多变形第一个外环的坐标（数组形式）
+//                var coordinates = feature.getGeometry().getCoordinates()[0];
+//                // 将返回的多边形外环的坐标以MultiPoint的形式重新创建为多点图形
+//                return new ol.geom.MultiPoint(coordinates);
+//            }
+        })
+    ];
+
+    // GeoJson格式的数据
+    var geojsonObject = {
+        'type': 'FeatureCollection',
+        'crs': {
+            'type': 'name',
+            'properties': {
+                'name': 'EPSG:3857'
+            }
+        },
+        'features': [{
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [-5e6, 6e6]//-5e6, 6e6
+            }
+        }]
+    };
+
+    // 读取GeoJson数据并将其初始化为矢量图层源
+    var source = new ol.source.Vector({
+        features: (new ol.format.GeoJSON()).readFeatures(geojsonObject)
+    });
+
+    // 承载GeoJson数据的矢量图层
+    var layer = new ol.layer.Vector({
+        source: source,
+        style: styles           // 图层可以接受一个样式数组作为渲染的样式
+    });
+//    var map = new ol.Map({
+//        target: 'mainMap',
+//        layers: [
+//            layer
+//        ],
+//        view: new ol.View({
+//            center: [0, 3000000],
+//            zoom: 2
+//        })
+//    });
+    // 创建地图
+    var map =new ol.Map({
+        layers: [
+            layer,
+            baiduMapLayer2
+
+        ],
+        view: new ol.View({
+            // 设置成都为地图中心  104.06, 30.67     121.48789949,31.24916171
+            center: ol.proj.transform([121.478512,31.229882], 'EPSG:4326', 'EPSG:3857'),
+            zoom: 10
+        }),
+        target: 'mainMap'
+    });
+
+
+
+</script>

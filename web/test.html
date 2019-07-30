@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+        body, html,#allmap {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=wkMfrL0doQeSxjBTRT16vssL"></script>
+    <title>获取地图显示范围</title>
+</head>
+<body>
+<div id="allmap"></div>
+</body>
+</html>
+<script type="text/javascript">
+    var map = new BMap.Map('allmap');
+    var poi = new BMap.Point(113.373764,23.130284);
+    map.centerAndZoom(poi, 16);
+    map.enableScrollWheelZoom();
+    var polygonCfg = getAreaLatLng();
+    var polygon1 = new BMap.Polygon(polygonCfg,{});
+//    var polygon1 = new BMap.Polygon([
+//        new BMap.Point(113.941853,22.530777),
+//        new BMap.Point(113.940487,22.527789),
+//        new BMap.Point(113.94788,22.527597),
+//        new BMap.Point(113.947925,22.530618)
+//    ], {});
+    //113.36974,23.127094
+    function getAreaLatLng(){
+        var polygonCfg = [];
+        var leftLng = 113296;
+        var rightLng = 113319;
+        var leftLat = 23153;
+        var rightLat = 23173;
+        for(var i=leftLng;i<rightLng;i++){
+            for(var j=leftLat;j<rightLat;j++){
+                polygonCfg.push(new BMap.Point(i/1000,j/100))
+            }
+        }
+        return polygonCfg;
+    }
+    map.addOverlay(polygon1);
+    console.log(polygon1.getPath());
+</script>
