@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Markes</title>
+    <link rel="stylesheet" href="resources/ol/ol.css" type="text/css">
+    <script src="resources/ol/ol.js"></script>
+    <script src="resources/tooltip.js"></script>
+    <script src="resources/popper.js"></script>
+    <script src="resources/jquery-2.2.3.min.js"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=FXtbv5ywNGiHETeHwyMfqGZNSESGWta6"></script>
+    <link rel="stylesheet" href="resources/bootstrap/bootstrap.css" type="text/css">
+    <script src="resources/bootstrap/bootstrap.js"></script>
+    <script src="resources/echarts.js"></script>
+    <script src="resources/index.js"></script>
+    <style type="text/css">
+        .messageBox{
+            color: #2e6da4;
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 240px;
+            text-align: center;
+        }
+        .messageBox .tr2{
+            color: #ff2feb;
+            font-size: 16px;
+            font-weight: normal;
+            text-align: left;
+        }
+        .tr2 .td1{
+            cursor: pointer;
+        }
+        /*设置弹出框样式*/
+        .ol-popup {
+            position: absolute;
+            background-color: #eeeeee;
+            -webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+            filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 400px;
+        }
+        .ol-popup:after, .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+        .ol-popup:after {
+            border-top-color: #eeeeee;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+        }
+        .ol-popup-closer:after {
+            content: "✖";
+        }
+    </style>
+</head>
+<body>
+<div id="map" style="width:100%;height: 100%;"></div>
+    <div id="btns">
+        <button onclick="addMarks('organ','机构',{lng:'121.520928',lat:'31.058963'})">添加marks(机构)</button>&nbsp;&nbsp;
+        <button onclick="addMarks('doctor','医生',{lng:'121.529983',lat:'31.072511'})">添加marks(医院)</button>&nbsp;&nbsp;
+    </div>
+    <!--<div id="popup"></div>-->
+
+
+    <div id="popup" class="ol-popup">
+        <div class="pophead" style="width:100%;height: 20px;">
+            <div id="popup-title" style="font:bold 15px sans-serif;align:left;position: absolute;top: 5px;left: 8px;color: #000000">测试点信息</div>
+            <a href="#" id="popup-closer" class="ol-popup-closer" style="color:#8e908c;"></a>
+        </div>
+        <div id="popup-content" style="padding: 10px"></div>
+    </div>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        &times;
+                    </button>
+                    <h4 class="modal-title" id="myModalLabel">
+                        模态框（Modal）标题
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    在这里添加一些文本
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                        提交更改
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal -->
+    </div>
+    <script type="text/javascript">
+        var allMarks={};
+        var projection = ol.proj.get("EPSG:3857");
+        var resolutions = [];
+        for(var i=0; i<19; i++){
+            resolutions[i] = Math.pow(2, 18-i);
+        }
+        var tilegrid  = new ol.tilegrid.TileGrid({
+            origin: [0,0],
+            resolutions: resolutions
+        });
+
+        var baidu_source = new ol.source.TileImage({
+            projection: projection,
+            tileGrid: tilegrid,
+            tileUrlFunction: function(tileCoord, pixelRatio, proj){
+                if(!tileCoord){
+                    return "";
+                }
+                var z = tileCoord[0];
+                var x = tileCoord[1];
+                var y = tileCoord[2];
+
+                if(x<0){
+                    x = "M"+(-x);
+                }
+                if(y<0){
+                    y = "M"+(-y);
+                }
+
+                return "http://online3.map.bdimg.com/onlinelabel/?qt=tile&x="+x+"&y="+y+"&z="+z+"&styles=pl&udt=20151021&scaler=1&p=1";
+            }
+        });
+        //先声明一个点位图层，并设置好样式
+        var layer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                projection: 'EPSG:3857'
+            })
+        })
+        var baidu_layer = new ol.layer.Tile({
+            source: baidu_source
+        });
+
+        var map = new ol.Map({
+            target: 'map',
+            layers: [baidu_layer,layer],
+            view: new ol.View({
+                projection: 'EPSG:4326',
+                center: [121.473641,31.230989],
+                zoom: 9
+            })
+        });
+        var element = document.getElementById('popup');
+        var popup = new ol.Overlay({element: element});
+        map.addOverlay(popup);
+        map.on('singleclick', function (evt) {
+//            var pixel = map.getEventPixel(evt.originalEvent);
+            var feature = map.forEachFeatureAtPixel(evt.pixel, function (feature, layer) {
+                return feature;
+            });
+            $(element).popover('destroy');
+            if (feature) {
+                var coordinates = feature.getGeometry().getCoordinates();
+                popup.setPosition(coordinates);
+//                $(element).popover({
+//                    title:feature.get('name'),
+//                    placement: 'top',
+//                    animation: false,
+//                    html: true,
+//                    content: '<table class="messageBox"><tr><td colspan="3">Hello Maps</td></tr><tr class="tr2"><td class="td1" onclick="clickTest(1)">百度地图</td><td class="td1" onclick="clickTest(2)">高德地图</td><td>超图</td></tr></table>'
+//                });
+                $(element).popover('show');
+            }
+        });
+
+        function addMarks(imgName,lableName,coord){
+            //是否添加过标记
+            if(!allMarks[coord.lng+'-'+coord.lat]){
+                allMarks[coord.lng+'-'+coord.lat] =lableName;
+            }else{
+                //判断是否为同一表姐
+                if(allMarks[coord.lng+'-'+coord.lat] == lableName){
+                    return;
+                }
+            }
+
+            // 创建一个Feature，并设置好在地图上的位置
+            var anchor = new ol.Feature({
+                geometry: new ol.geom.Point([coord.lng,coord.lat]),
+                name:lableName
+            });
+            // 设置样式，在样式中就可以设置图标
+            anchor.setStyle(new ol.style.Style({
+                image: new ol.style.Icon({
+                    radius: 20,
+                    opacity: 0.7,
+                    src: 'resources/img/'+imgName+'.jpg'
+                }),
+                text: new ol.style.Text({
+                    //对齐方式
+                    textAlign: 'center',
+                    //文本基线
+                    textBaseline: 'middle',
+                    //字体样式
+                    font: 'normal 14px 微软雅黑',
+                    //文本内容
+                    text: lableName,
+                    //填充样式
+                    fill: new ol.style.Fill({
+                        color: '#aa3300'
+                    }),
+                    //笔触
+                    stroke: new ol.style.Stroke({
+                        color: '#ffcc33',
+                        width: 2
+                    })
+                })
+            }));
+            // 添加到之前的创建的layer中去
+            layer.getSource().addFeature(anchor);
+        }
+        function clickTest(num){
+            console.info('this is test event...');
+            if(num==1){
+                $('#myModal').modal('show');
+            }else{
+                $('#myModal').modal('hide');
+                window.open('https://lbs.amap.com/api/javascript-api/summary');
+            }
+
+        }
+
+        var pop_closer = document.getElementById('popup-closer');
+        pop_closer.onclick = function () {
+            popup.setPosition(undefined);
+            pop_closer.blur();
+            return false;
+        };
+        var str = '';
+        str += "<table><tbody><tr>"
+            + "<td width='60px' align='right'>地址：</td>"
+            + "<td width='120px' align='left'><font color='#ff0000'>红星美凯龙 </font></td>"
+            + "<td width='180px' height='180px' id='chartcontainer' rowspan='4'></td>"
+            + "</tr>"
+            + "<tr>"
+            + "<td width='60px' align='right'>名称：</td>"
+            + "<td width='120px' align='left'><font color='#ff0000'>医家门诊 </font></td>"
+            + "</tr>"
+            + "<tr>"
+            + "<td width='60px' align='right'>院长：</td>"
+            + "<td width='120px' align='left'><font color='#ff0000'>蓝星人 </font></td>"
+            + "</tr>"
+            + "<tr>"
+            + "<td width='60px' align='right'>日期：</td>"
+            + "<td width='120px' align='left'><font color='#ff0000'>2019/1/2 </font></td>"
+            + "</tr>"
+            + "</tbody></table></div>";
+        document.getElementById('popup-content').innerHTML = str;
+
+        var myChart = echarts.init(document.getElementById('chartcontainer'));
+        option = {
+            tooltip : {
+                formatter: "{a} <br/>{b} : {c}%"
+            },
+            toolbox: {
+                feature: {
+                    restore: {},
+                    saveAsImage: {}
+                }
+            },
+            series: [
+                {
+                    name: '业务指标',
+                    type: 'gauge',
+                    detail: {formatter:'{value}%'},
+                    data: [{value: 50, name: '完成率'}]
+                }
+            ]
+        };
+
+        setInterval(function () {
+            option.series[0].data[0].value = (Math.random() * 100).toFixed(2) - 0;
+            myChart.setOption(option, true);
+        },2000);
+    </script>
+</body>
+</html>
